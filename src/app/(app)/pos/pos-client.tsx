@@ -9,7 +9,6 @@ import { cn, formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { BarcodeScanner } from '@/components/barcode-scanner'
 import type { Database } from '@/lib/supabase/types'
 
@@ -22,8 +21,8 @@ type CartItem = {
 
 const PAYMENT_METHODS = [
   { value: 'pix', label: 'Pix' },
-  { value: 'cartao', label: 'Cartão' },
   { value: 'dinheiro', label: 'Dinheiro' },
+  { value: 'cartao', label: 'Débito ou Crédito' },
 ]
 
 export function PosClient({ initialProducts }: { initialProducts: Product[] }) {
@@ -273,18 +272,28 @@ export function PosClient({ initialProducts }: { initialProducts: Product[] }) {
                 <span className="text-2xl font-bold">{formatCurrency(total)}</span>
               </div>
 
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Forma de pagamento" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PAYMENT_METHODS.map((method) => (
-                    <SelectItem key={method.value} value={method.value}>
-                      {method.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-3 gap-2">
+                {PAYMENT_METHODS.map((method) => (
+                  <button
+                    key={method.value}
+                    type="button"
+                    onClick={() => setPaymentMethod(method.value)}
+                    className={cn(
+                      'rounded-xl border px-2 py-2.5 text-center text-xs font-semibold leading-tight transition-all',
+                      paymentMethod === method.value
+                        ? 'border-transparent text-primary-foreground shadow-lg shadow-primary/25'
+                        : 'border-border text-foreground hover:bg-accent'
+                    )}
+                    style={
+                      paymentMethod === method.value
+                        ? { background: 'linear-gradient(135deg, hsl(221, 83%, 53%) 0%, hsl(199, 89%, 48%) 100%)' }
+                        : undefined
+                    }
+                  >
+                    {method.label}
+                  </button>
+                ))}
+              </div>
 
               <Button
                 type="button"
