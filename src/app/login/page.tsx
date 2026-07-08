@@ -19,6 +19,10 @@ const loginSchema = z.object({
   password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
 })
 
+const forgotPasswordSchema = z.object({
+  email: z.email('E-mail inválido'),
+})
+
 const signupSchema = z.object({
   businessName: z.string().min(2, 'Informe o nome do seu negócio'),
   ownerName: z.string().min(2, 'Informe seu nome'),
@@ -29,6 +33,7 @@ const signupSchema = z.object({
 
 type LoginValues = z.infer<typeof loginSchema>
 type SignupValues = z.infer<typeof signupSchema>
+type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>
 
 const AUTH_ERROR_MESSAGES: Record<string, string> = {
   'Invalid login credentials': 'E-mail ou senha inválidos.',
@@ -110,7 +115,13 @@ function GoogleButton() {
   )
 }
 
-function LoginForm({ onSwitchToSignup }: { onSwitchToSignup: () => void }) {
+function LoginForm({
+  onSwitchToSignup,
+  onSwitchToForgotPassword,
+}: {
+  onSwitchToSignup: () => void
+  onSwitchToForgotPassword: () => void
+}) {
   const router = useRouter()
   const { toast } = useToast()
   const {
@@ -140,7 +151,16 @@ function LoginForm({ onSwitchToSignup }: { onSwitchToSignup: () => void }) {
           {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Senha</Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password">Senha</Label>
+            <button
+              type="button"
+              onClick={onSwitchToForgotPassword}
+              className="text-xs font-medium text-primary hover:underline"
+            >
+              Esqueci minha senha
+            </button>
+          </div>
           <PasswordInput id="password" registerProps={register('password')} />
           {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
         </div>
@@ -255,8 +275,63 @@ function SignupForm({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
   )
 }
 
+function ForgotPasswordForm({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
+  const { toast } = useToast()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting, isSubmitSuccessful },
+  } = useForm<ForgotPasswordValues>({ resolver: zodResolver(forgotPasswordSchema) })
+
+  const onSubmit = async ({ email }: ForgotPasswordValues) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    })
+
+    if (error) {
+      toast({ variant: 'destructive', title: 'Não foi possível enviar o e-mail', description: translateAuthError(error.message) })
+      return
+    }
+
+    toast({ variant: 'success', title: 'E-mail enviado', description: 'Confira sua caixa de entrada para redefinir a senha.' })
+  }
+
+  if (isSubmitSuccessful) {
+    return (
+      <div className="space-y-4 text-center">
+        <p className="text-sm text-muted-foreground">
+          Se existir uma conta com esse e-mail, enviamos um link para redefinir a senha. Confira sua caixa de entrada
+          (e o spam).
+        </p>
+        <button type="button" onClick={onSwitchToLogin} className="text-sm font-semibold text-primary hover:underline">
+          Voltar para o login
+        </button>
+      </div>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="forgotEmail">E-mail</Label>
+        <Input id="forgotEmail" type="email" placeholder="voce@email.com" {...register('email')} />
+        {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+      </div>
+      <Button type="submit" variant="gradient" size="lg" className="w-full" disabled={isSubmitting}>
+        {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
+        Enviar link de recuperação
+      </Button>
+      <p className="text-center text-sm text-muted-foreground">
+        <button type="button" onClick={onSwitchToLogin} className="font-semibold text-primary hover:underline">
+          Voltar para o login
+        </button>
+      </p>
+    </form>
+  )
+}
+
 export default function LoginPage() {
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot'>('login')
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
@@ -276,18 +351,24 @@ export default function LoginPage() {
 
         <Card className={cn('shadow-xl')}>
           <CardHeader>
-            <CardTitle>{mode === 'login' ? 'Entrar' : 'Criar conta'}</CardTitle>
+            <CardTitle>
+              {mode === 'login' ? 'Entrar' : mode === 'signup' ? 'Criar conta' : 'Recuperar senha'}
+            </CardTitle>
             <CardDescription>
               {mode === 'login'
                 ? 'Acesse sua conta para gerenciar seu negócio.'
-                : 'Comece a gerenciar seu negócio em poucos minutos.'}
+                : mode === 'signup'
+                  ? 'Comece a gerenciar seu negócio em poucos minutos.'
+                  : 'Informe seu e-mail para receber um link de redefinição.'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {mode === 'login' ? (
-              <LoginForm onSwitchToSignup={() => setMode('signup')} />
-            ) : (
+              <LoginForm onSwitchToSignup={() => setMode('signup')} onSwitchToForgotPassword={() => setMode('forgot')} />
+            ) : mode === 'signup' ? (
               <SignupForm onSwitchToLogin={() => setMode('login')} />
+            ) : (
+              <ForgotPasswordForm onSwitchToLogin={() => setMode('login')} />
             )}
           </CardContent>
         </Card>
