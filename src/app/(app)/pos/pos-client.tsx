@@ -220,13 +220,15 @@ export function PosClient({ initialProducts }: { initialProducts: Product[] }) {
                     </span>
                   )}
                   {product.photo_url && (
-                    <Image
-                      src={product.photo_url}
-                      alt=""
-                      width={80}
-                      height={80}
-                      className="mb-2 h-16 w-full rounded-lg object-cover"
-                    />
+                    <div className="relative mb-2 h-16 w-full overflow-hidden rounded-lg">
+                      <Image
+                        src={product.photo_url}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1280px) 25vw, (min-width: 640px) 33vw, 50vw"
+                        className="object-cover"
+                      />
+                    </div>
                   )}
                   <p className="truncate font-medium">{product.name}</p>
                   <p className="text-xs text-muted-foreground">{product.category}</p>
