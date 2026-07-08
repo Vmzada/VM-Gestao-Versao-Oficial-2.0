@@ -167,7 +167,7 @@ export function ProductsClient({ initialProducts }: { initialProducts: Product[]
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="relative">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -224,6 +224,10 @@ export function ProductsClient({ initialProducts }: { initialProducts: Product[]
               </tbody>
             </table>
           </div>
+          {/* Hints that the table scrolls sideways on narrow screens, where
+              Status/Ações get pushed off — hidden once there's room to show
+              every column without scrolling. */}
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-8 rounded-r-2xl bg-gradient-to-l from-card to-transparent sm:hidden" />
         </Card>
       )}
 

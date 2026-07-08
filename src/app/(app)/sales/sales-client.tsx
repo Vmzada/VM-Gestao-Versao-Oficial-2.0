@@ -174,13 +174,13 @@ export function SalesClient({
             ))}
           </div>
 
-          <div className="flex flex-wrap items-end gap-4 border-t border-border/50 pt-4">
+          <div className="flex flex-col gap-4 border-t border-border/50 pt-4 sm:flex-row sm:flex-wrap sm:items-end">
             <div className="space-y-1.5">
               <Label htmlFor="customDay">Escolher um dia</Label>
               <Input
                 id="customDay"
                 type="date"
-                className="w-44"
+                className="w-full sm:w-48"
                 value={customDay}
                 onChange={(e) => applyCustomDay(e.target.value)}
               />
@@ -190,7 +190,7 @@ export function SalesClient({
               <Input
                 id="customMonth"
                 type="month"
-                className="w-44"
+                className="w-full sm:w-48"
                 value={customMonth}
                 onChange={(e) => applyCustomMonth(e.target.value)}
               />
