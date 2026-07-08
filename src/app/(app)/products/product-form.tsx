@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { BarcodeScanner } from '@/components/barcode-scanner'
+import { PhotoUpload } from '@/components/photo-upload'
 import type { Database } from '@/lib/supabase/types'
 
 type Product = Database['public']['Tables']['products']['Row']
@@ -25,7 +26,7 @@ const productSchema = z.object({
   minStockQuantity: z.coerce.number().nonnegative('Quantidade inválida'),
 })
 
-export type ProductFormValues = z.infer<typeof productSchema>
+export type ProductFormValues = z.infer<typeof productSchema> & { photoUrl: string | null }
 
 const UNITS = ['un', 'kg', 'g', 'L', 'ml', 'cx', 'pct', 'fardo']
 const NEW_CATEGORY = '__new__'
@@ -44,6 +45,7 @@ export function ProductForm({
   isSubmitting: boolean
 }) {
   const [scannerOpen, setScannerOpen] = useState(false)
+  const [photoUrl, setPhotoUrl] = useState<string | null>(product?.photo_url ?? null)
   const [isAddingCategory, setIsAddingCategory] = useState(false)
   const [newCategory, setNewCategory] = useState('')
   // Categories confirmed through the inline "add category" flow (or the
@@ -63,7 +65,7 @@ export function ProductForm({
     setValue,
     watch,
     formState: { errors },
-  } = useForm<z.input<typeof productSchema>, unknown, ProductFormValues>({
+  } = useForm<z.input<typeof productSchema>, unknown, z.output<typeof productSchema>>({
     resolver: zodResolver(productSchema),
     defaultValues: product
       ? {
@@ -81,6 +83,8 @@ export function ProductForm({
 
   const unit = watch('unit')
   const category = watch('category')
+
+  const submitWithPhoto = (values: z.output<typeof productSchema>) => onSubmit({ ...values, photoUrl })
 
   const confirmNewCategory = () => {
     const trimmed = newCategory.trim()
@@ -100,8 +104,13 @@ export function ProductForm({
 
   return (
     <>
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(submitWithPhoto)} className="space-y-4">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-2 sm:col-span-2">
+            <Label>Foto (opcional)</Label>
+            <PhotoUpload folder="products" value={photoUrl} onChange={setPhotoUrl} />
+          </div>
+
           <div className="space-y-2 sm:col-span-2">
             <Label htmlFor="name">Nome</Label>
             <Input id="name" placeholder="Coca-Cola Lata 350ml" {...register('name')} />

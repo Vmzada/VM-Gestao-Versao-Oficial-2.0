@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Goal, Pencil, Plus, Trash2, Trophy, Volleyball } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
@@ -45,6 +46,7 @@ export function CourtsClient({ initialCourts }: { initialCourts: Court[] }) {
       type: values.type,
       price_per_hour: values.pricePerHour,
       description: values.description || null,
+      photo_url: values.photoUrl,
     }
 
     if (editingCourt) {
@@ -65,7 +67,7 @@ export function CourtsClient({ initialCourts }: { initialCourts: Court[] }) {
     } else {
       const { data, error } = await supabase
         .from('courts')
-        .insert({ ...payload, user_id: user.id, is_active: true, photo_url: null })
+        .insert({ ...payload, user_id: user.id, is_active: true })
         .select()
         .single()
 
@@ -140,9 +142,19 @@ export function CourtsClient({ initialCourts }: { initialCourts: Court[] }) {
               <Card key={court.id}>
                 <CardContent className="p-5">
                   <div className="flex items-start justify-between">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <TypeIcon className="h-5 w-5" />
-                    </div>
+                    {court.photo_url ? (
+                      <Image
+                        src={court.photo_url}
+                        alt=""
+                        width={44}
+                        height={44}
+                        className="h-11 w-11 shrink-0 rounded-xl object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                        <TypeIcon className="h-5 w-5" />
+                      </div>
+                    )}
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon-sm" onClick={() => openEditDialog(court)}>
                         <Pencil className="h-4 w-4" />

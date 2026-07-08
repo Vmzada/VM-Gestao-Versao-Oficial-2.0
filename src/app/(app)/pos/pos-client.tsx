@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useMemo, useState } from 'react'
+import Image from 'next/image'
 import { Minus, Plus, ScanLine, Search, ShoppingCart, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
@@ -217,6 +218,15 @@ export function PosClient({ initialProducts }: { initialProducts: Product[] }) {
                     <span className="absolute -right-2 -top-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
                       {inCart}
                     </span>
+                  )}
+                  {product.photo_url && (
+                    <Image
+                      src={product.photo_url}
+                      alt=""
+                      width={80}
+                      height={80}
+                      className="mb-2 h-16 w-full rounded-lg object-cover"
+                    />
                   )}
                   <p className="truncate font-medium">{product.name}</p>
                   <p className="text-xs text-muted-foreground">{product.category}</p>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -8,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { PhotoUpload } from '@/components/photo-upload'
 import type { Database } from '@/lib/supabase/types'
 
 type Court = Database['public']['Tables']['courts']['Row']
@@ -19,7 +21,7 @@ const courtSchema = z.object({
   description: z.string().optional(),
 })
 
-export type CourtFormValues = z.infer<typeof courtSchema>
+export type CourtFormValues = z.infer<typeof courtSchema> & { photoUrl: string | null }
 
 export function CourtForm({
   court,
@@ -32,13 +34,14 @@ export function CourtForm({
   onCancel: () => void
   isSubmitting: boolean
 }) {
+  const [photoUrl, setPhotoUrl] = useState<string | null>(court?.photo_url ?? null)
   const {
     register,
     handleSubmit,
     setValue,
     watch,
     formState: { errors },
-  } = useForm<z.input<typeof courtSchema>, unknown, CourtFormValues>({
+  } = useForm<z.input<typeof courtSchema>, unknown, z.output<typeof courtSchema>>({
     resolver: zodResolver(courtSchema),
     defaultValues: court
       ? {
@@ -52,8 +55,15 @@ export function CourtForm({
 
   const type = watch('type')
 
+  const submitWithPhoto = (values: z.output<typeof courtSchema>) => onSubmit({ ...values, photoUrl })
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(submitWithPhoto)} className="space-y-4">
+      <div className="space-y-2">
+        <Label>Foto (opcional)</Label>
+        <PhotoUpload folder="courts" value={photoUrl} onChange={setPhotoUrl} />
+      </div>
+
       <div className="space-y-2">
         <Label htmlFor="name">Nome da quadra</Label>
         <Input id="name" placeholder="Quadra Society" {...register('name')} />

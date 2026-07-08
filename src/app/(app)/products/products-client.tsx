@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import Image from 'next/image'
 import { Package, Pencil, Plus, Search, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/contexts/AuthContext'
@@ -65,6 +66,7 @@ export function ProductsClient({ initialProducts }: { initialProducts: Product[]
       cost_price: values.costPrice > 0 ? values.costPrice : null,
       stock_quantity: values.stockQuantity,
       min_stock_quantity: values.minStockQuantity,
+      photo_url: values.photoUrl,
     }
 
     if (editingProduct) {
@@ -85,7 +87,7 @@ export function ProductsClient({ initialProducts }: { initialProducts: Product[]
     } else {
       const { data, error } = await supabase
         .from('products')
-        .insert({ ...payload, user_id: user.id, is_active: true, photo_url: null })
+        .insert({ ...payload, user_id: user.id, is_active: true })
         .select()
         .single()
 
@@ -106,6 +108,14 @@ export function ProductsClient({ initialProducts }: { initialProducts: Product[]
 
     const { error } = await supabase.from('products').delete().eq('id', product.id)
     if (error) {
+      if (error.code === '23503') {
+        toast({
+          variant: 'destructive',
+          title: 'Não foi possível excluir',
+          description: 'Esse produto já tem vendas registradas. Desative-o em vez de excluir.',
+        })
+        return
+      }
       toast({ variant: 'destructive', title: 'Não foi possível excluir', description: error.message })
       return
     }
@@ -186,8 +196,27 @@ export function ProductsClient({ initialProducts }: { initialProducts: Product[]
                   return (
                     <tr key={product.id} className="border-b border-border/30 last:border-0">
                       <td className="px-4 py-3">
-                        <div className="font-medium">{product.name}</div>
-                        {product.barcode && <div className="text-xs text-muted-foreground">{product.barcode}</div>}
+                        <div className="flex items-center gap-3">
+                          {product.photo_url ? (
+                            <Image
+                              src={product.photo_url}
+                              alt=""
+                              width={36}
+                              height={36}
+                              className="h-9 w-9 shrink-0 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted">
+                              <Package className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-medium">{product.name}</div>
+                            {product.barcode && (
+                              <div className="text-xs text-muted-foreground">{product.barcode}</div>
+                            )}
+                          </div>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{product.category}</td>
                       <td className="px-4 py-3">{formatCurrency(product.sale_price)}</td>
