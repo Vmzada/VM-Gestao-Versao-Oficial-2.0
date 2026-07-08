@@ -25,6 +25,12 @@ export function ProductsClient({ initialProducts }: { initialProducts: Product[]
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  const categories = useMemo(() => {
+    const defaults = ['Bebidas', 'Alimentos', 'Doces', 'Salgados', 'Outros']
+    const used = products.map((p) => p.category).filter((c) => !defaults.includes(c))
+    return [...defaults, ...Array.from(new Set(used))]
+  }, [products])
+
   const filteredProducts = useMemo(() => {
     const query = search.trim().toLowerCase()
     if (!query) return products
@@ -231,6 +237,7 @@ export function ProductsClient({ initialProducts }: { initialProducts: Product[]
           </DialogHeader>
           <ProductForm
             product={editingProduct}
+            categories={categories}
             onSubmit={handleSubmit}
             onCancel={() => setDialogOpen(false)}
             isSubmitting={isSubmitting}
